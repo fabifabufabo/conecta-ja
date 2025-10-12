@@ -4,22 +4,33 @@ import { revalidatePath } from "next/cache";
 import { redirect } from "next/navigation";
 
 import { createClient } from "@/utils/supabase/server";
+import { loginSchema, signupSchema } from "./schemas";
 
 export async function login(formData: FormData) {
   const supabase = await createClient();
 
-  // type-casting here for convenience
-  // in practice, you should validate your inputs
-  const data = {
-    email: formData.get("email") as string,
-    password: formData.get("password") as string,
+  const rawData = {
+    email: formData.get("email"),
+    password: formData.get("password"),
   };
+
+  const validationResult = loginSchema.safeParse(rawData);
+
+  if (!validationResult.success) {
+    return {
+      error: "Dados inválidos. Verifique os campos e tente novamente.",
+    };
+  }
+
+  const data = validationResult.data;
 
   const { error } = await supabase.auth.signInWithPassword(data);
 
   if (error) {
     console.error("Error during login:", error);
-    redirect("/error");
+    return {
+      error: error.message || "Erro ao fazer login. Tente novamente.",
+    };
   }
 
   revalidatePath("/", "layout");
@@ -29,26 +40,37 @@ export async function login(formData: FormData) {
 export async function signup(formData: FormData) {
   const supabase = await createClient();
 
-  // type-casting here for convenience
-  // in practice, you should validate your inputs
-  const data = {
-    email: formData.get("email") as string,
-    password: formData.get("password") as string,
+  const rawData = {
+    name: formData.get("name"),
+    email: formData.get("email"),
+    password: formData.get("password"),
+    userType: formData.get("userType"),
   };
 
+  const validationResult = signupSchema.safeParse(rawData);
+
+  if (!validationResult.success) {
+    return {
+      error: "Dados inválidos. Verifique os campos e tente novamente.",
+    };
+  }
+
+  const data = validationResult.data;
+
   const { error } = await supabase.auth.signUp({
-    ...data,
+    email: data.email,
+    password: data.password,
     options: {
       data: {
-        full_name: formData.get("name") as string,
-        user_type: formData.get("userType") as string,
+        full_name: data.name,
+        user_type: data.userType,
       },
     },
   });
 
   if (error) {
     console.error("Error during sign up:", error);
-    redirect("/error");
+    return { error: error.message || "Erro ao criar conta. Tente novamente." };
   }
 
   revalidatePath("/", "layout");
