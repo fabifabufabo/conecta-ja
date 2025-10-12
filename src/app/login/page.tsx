@@ -115,6 +115,7 @@ export default function LoginPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
+                {/* Login Form */}
                 <form onSubmit={loginForm.handleSubmit(onLoginSubmit)}>
                   <FieldGroup>
                     <Controller
@@ -183,6 +184,7 @@ export default function LoginPage() {
                 </CardDescription>
               </CardHeader>
               <CardContent>
+                {/* Signup Form */}
                 <form onSubmit={signupForm.handleSubmit(onSignupSubmit)}>
                   <FieldGroup>
                     <Controller
