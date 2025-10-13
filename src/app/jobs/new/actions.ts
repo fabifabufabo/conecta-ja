@@ -50,7 +50,7 @@ export async function createJob(formData: FormData) {
   if (error) {
     console.error("Error creating job:", error);
     return {
-      error: "Erro ao criar trabalho. Tente novamente.",
+      error: "Erro ao criar serviço. Tente novamente.",
     };
   }
 

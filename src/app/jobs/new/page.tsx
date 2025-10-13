@@ -86,7 +86,7 @@ export default function NewJobPage() {
 
   return (
     <div className="container mx-auto max-w-3xl py-8">
-      <h1 className="mb-6 text-3xl font-bold">Criar Novo Trabalho</h1>
+      <h1 className="mb-6 text-3xl font-bold">Criar Novo Serviço</h1>
 
       <form
         onSubmit={newJobForm.handleSubmit(onNewJobSubmit)}
@@ -97,7 +97,7 @@ export default function NewJobPage() {
           <CardHeader>
             <CardTitle>Informações Básicas</CardTitle>
             <CardDescription>
-              Preencha as informações principais sobre o trabalho
+              Preencha as informações principais sobre o serviço
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -193,7 +193,7 @@ export default function NewJobPage() {
                   render={({ field }) => (
                     <Textarea
                       id="description"
-                      placeholder="Descreva os detalhes do trabalho..."
+                      placeholder="Descreva os detalhes do serviço..."
                       className="min-h-[120px]"
                       {...field}
                     />
@@ -211,7 +211,7 @@ export default function NewJobPage() {
         <Card>
           <CardHeader>
             <CardTitle>Localização</CardTitle>
-            <CardDescription>Onde o trabalho será realizado?</CardDescription>
+            <CardDescription>Onde o serviço será realizado?</CardDescription>
           </CardHeader>
           <CardContent>
             <FieldGroup>
@@ -239,7 +239,7 @@ export default function NewJobPage() {
           <CardHeader>
             <CardTitle>Valor</CardTitle>
             <CardDescription>
-              Qual o valor estimado para o trabalho?
+              Qual o valor estimado para o serviço?
             </CardDescription>
           </CardHeader>
           <CardContent>
@@ -278,7 +278,7 @@ export default function NewJobPage() {
           <Button type="button" variant="outline">
             Cancelar
           </Button>
-          <Button type="submit">Criar Trabalho</Button>
+          <Button type="submit">Criar Serviço</Button>
         </div>
 
         {/* General form error */}
