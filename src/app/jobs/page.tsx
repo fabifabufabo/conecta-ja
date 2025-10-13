@@ -1,7 +1,7 @@
 "use client";
 import { Plus, Search } from "lucide-react";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState, useTransition } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -13,48 +13,85 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { JOBS_PAGE_SIZE } from "@/lib/constants";
 import { getJobs } from "./actions";
 import { JOB_CATEGORIES, JOB_CATEGORY_LABELS, type Job } from "./schemas";
 
 export default function JobsPage() {
   const [jobs, setJobs] = useState<Job[]>([]);
+  const [totalJobs, setTotalJobs] = useState(0);
+  const [page, setPage] = useState(1);
+
   const [loading, setLoading] = useState(true);
+  const [loadingMore, setLoadingMore] = useState(false);
   const [error, setError] = useState<string | null>(null);
+
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
 
-  useEffect(() => {
-    async function loadJobs() {
-      setLoading(true);
+  const [isPending, startTransition] = useTransition();
+
+  const loadJobs = useCallback(
+    async ({
+      page: newPage,
+      replace = false,
+    }: {
+      page: number;
+      replace?: boolean;
+    }) => {
+      if (replace) {
+        setLoading(true);
+      } else {
+        setLoadingMore(true);
+      }
       setError(null);
 
-      const { data, error: fetchError } = await getJobs();
+      const {
+        data,
+        error: fetchError,
+        count,
+      } = await getJobs({
+        page: newPage,
+        pageSize: JOBS_PAGE_SIZE,
+        searchQuery,
+        category: selectedCategory,
+      });
 
       if (fetchError) {
         setError(fetchError);
       } else {
-        setJobs(data || []);
+        setJobs((prev) =>
+          replace ? (data ?? []) : [...prev, ...(data ?? [])],
+        );
+        setTotalJobs(count);
+        setPage(newPage);
       }
 
-      setLoading(false);
+      if (replace) {
+        setLoading(false);
+      } else {
+        setLoadingMore(false);
+      }
+    },
+    [searchQuery, selectedCategory],
+  );
+
+  useEffect(() => {
+    startTransition(() => {
+      loadJobs({ page: 1, replace: true });
+    });
+  }, [loadJobs]);
+
+  const handleLoadMore = () => {
+    if (hasMore) {
+      startTransition(() => {
+        loadJobs({ page: page + 1 });
+      });
     }
+  };
 
-    loadJobs();
-  }, []);
-
-  // TODO: Implement pagination with a "Load More" button
-  // For now, we just filter the already loaded jobs
-  const filteredJobs = jobs.filter((job) => {
-    const matchesSearch =
-      job.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      job.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      job.location_text.toLowerCase().includes(searchQuery.toLowerCase());
-
-    const matchesCategory =
-      selectedCategory === "all" || job.category === selectedCategory;
-
-    return matchesSearch && matchesCategory;
-  });
+  const hasMore = jobs.length < totalJobs;
+  const isLoadingFirstTime = loading && page === 1;
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -86,8 +123,40 @@ export default function JobsPage() {
         </div>
       )}
 
+      {/* Search bar */}
+      <div className="max-w-4xl mx-auto mb-6">
+        <div className="relative">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+          <Input
+            type="text"
+            placeholder="Buscar por título, descrição ou localização..."
+            value={searchQuery}
+            onChange={(e) => setSearchQuery(e.target.value)}
+            className="pl-10"
+          />
+        </div>
+      </div>
+
+      {/* Category filter */}
+      <div className="max-w-4xl mx-auto mb-8">
+        <Tabs
+          value={selectedCategory}
+          onValueChange={setSelectedCategory}
+          className="w-full"
+        >
+          <TabsList className="w-full justify-start overflow-x-auto flex-nowrap">
+            <TabsTrigger value="all">Todas</TabsTrigger>
+            {JOB_CATEGORIES.map((category) => (
+              <TabsTrigger key={category} value={category}>
+                {JOB_CATEGORY_LABELS[category]}
+              </TabsTrigger>
+            ))}
+          </TabsList>
+        </Tabs>
+      </div>
+
       {/* Loading state */}
-      {loading ? (
+      {isLoadingFirstTime ? (
         <div className="max-w-4xl mx-auto">
           <Card>
             <CardContent className="py-12 text-center">
@@ -97,51 +166,17 @@ export default function JobsPage() {
         </div>
       ) : (
         <>
-          {/* Search bar */}
-          <div className="max-w-4xl mx-auto mb-6">
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-              <Input
-                type="text"
-                placeholder="Buscar por título, descrição ou localização..."
-                value={searchQuery}
-                onChange={(e) => setSearchQuery(e.target.value)}
-                className="pl-10"
-              />
-            </div>
-          </div>
-
-          {/* Category filter */}
-          <div className="max-w-4xl mx-auto mb-8">
-            <Tabs
-              value={selectedCategory}
-              onValueChange={setSelectedCategory}
-              className="w-full"
-            >
-              <TabsList className="w-full justify-start overflow-x-auto flex-nowrap">
-                <TabsTrigger value="all">Todas</TabsTrigger>
-                {JOB_CATEGORIES.map((category) => (
-                  <TabsTrigger key={category} value={category}>
-                    {JOB_CATEGORY_LABELS[category]}
-                  </TabsTrigger>
-                ))}
-              </TabsList>
-            </Tabs>
-          </div>
-
           {/* Results */}
           <div className="max-w-4xl mx-auto mb-6">
             <p className="text-sm text-muted-foreground">
-              {filteredJobs.length}{" "}
-              {filteredJobs.length === 1
-                ? "serviço encontrado"
-                : "serviços encontrados"}
+              {totalJobs}{" "}
+              {totalJobs === 1 ? "serviço encontrado" : "serviços encontrados"}
             </p>
           </div>
 
           <div className="grid gap-6 max-w-4xl mx-auto">
-            {filteredJobs.length > 0 ? (
-              filteredJobs.map((job) => (
+            {jobs.length > 0 ? (
+              jobs.map((job) => (
                 <Card
                   key={job.id}
                   className="hover:shadow-lg transition-shadow"
@@ -208,11 +243,18 @@ export default function JobsPage() {
             )}
           </div>
 
-          <div className="mt-8 text-center">
-            <Button variant="outline" size="lg">
-              Carregar Mais Serviços
-            </Button>
-          </div>
+          {hasMore && (
+            <div className="mt-8 text-center">
+              <Button
+                variant="outline"
+                size="lg"
+                onClick={handleLoadMore}
+                disabled={loadingMore || isPending}
+              >
+                {loadingMore ? "Carregando..." : "Carregar Mais Serviços"}
+              </Button>
+            </div>
+          )}
         </>
       )}
     </div>
