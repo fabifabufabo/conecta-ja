@@ -9,7 +9,8 @@ export const signupSchema = z.object({
   name: z.string().min(3, "O nome deve ter no mínimo 3 caracteres"),
   email: z.email("Email inválido"),
   password: z.string().min(6, "A senha deve ter no mínimo 6 caracteres"),
-  userType: z.enum(["freelancer", "client"]),
+  // TODO: Create an enum for user types
+  userType: z.enum(["freelancer", "contractor"]),
 });
 
 export type LoginFormData = z.infer<typeof loginSchema>;

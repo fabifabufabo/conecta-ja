@@ -270,10 +270,12 @@ export default function LoginPage() {
                             <Button
                               type="button"
                               variant={
-                                field.value === "client" ? "default" : "outline"
+                                field.value === "contractor"
+                                  ? "default"
+                                  : "outline"
                               }
                               className="flex-1"
-                              onClick={() => field.onChange("client")}
+                              onClick={() => field.onChange("contractor")}
                             >
                               Quero Contratar
                             </Button>
