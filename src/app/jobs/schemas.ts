@@ -34,3 +34,16 @@ export const newJobSchema = z.object({
 });
 
 export type NewJobFormData = z.infer<typeof newJobSchema>;
+
+export type Job = {
+  id: number;
+  title: string;
+  description: string;
+  category: (typeof JOB_CATEGORIES)[number];
+  location_text: string;
+  value: number;
+  status: string;
+  created_at: string;
+  contractor_id: string;
+  freelancer_id: string | null;
+};

@@ -41,7 +41,7 @@ export async function login(formData: FormData) {
   revalidatePath("/", "layout");
 
   if (userType === "contractor") {
-    redirect("/jobs/new");
+    redirect("/jobs");
   } else {
     redirect("/");
   }
@@ -86,7 +86,7 @@ export async function signup(formData: FormData) {
   revalidatePath("/", "layout");
 
   if (data.userType === "contractor") {
-    redirect("/jobs/new");
+    redirect("/jobs");
   } else {
     redirect("/");
   }
