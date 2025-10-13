@@ -33,8 +33,18 @@ export async function login(formData: FormData) {
     };
   }
 
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  const userType = user?.user_metadata?.user_type;
+
   revalidatePath("/", "layout");
-  redirect("/");
+
+  if (userType === "contractor") {
+    redirect("/jobs/new");
+  } else {
+    redirect("/");
+  }
 }
 
 export async function signup(formData: FormData) {
@@ -74,5 +84,10 @@ export async function signup(formData: FormData) {
   }
 
   revalidatePath("/", "layout");
-  redirect("/");
+
+  if (data.userType === "contractor") {
+    redirect("/jobs/new");
+  } else {
+    redirect("/");
+  }
 }
