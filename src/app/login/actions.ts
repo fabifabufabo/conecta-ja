@@ -40,10 +40,10 @@ export async function login(formData: FormData) {
 
   revalidatePath("/", "layout");
 
-  if (userType === "contractor") {
+  if (userType === "freelancer") {
     redirect("/jobs");
   } else {
-    redirect("/");
+    redirect("/applications");
   }
 }
 
@@ -85,9 +85,9 @@ export async function signup(formData: FormData) {
 
   revalidatePath("/", "layout");
 
-  if (data.userType === "contractor") {
+  if (data.userType === "freelancer") {
     redirect("/jobs");
   } else {
-    redirect("/");
+    redirect("/applications");
   }
 }
