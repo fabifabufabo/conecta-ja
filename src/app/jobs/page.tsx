@@ -2,6 +2,7 @@
 import { Plus, Search } from "lucide-react";
 import Link from "next/link";
 import { useCallback, useEffect, useState, useTransition } from "react";
+import { toast } from "sonner";
 import { Button } from "@/components/ui/button";
 import {
   Card,
@@ -14,7 +15,7 @@ import {
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { JOBS_PAGE_SIZE } from "@/lib/constants";
-import { getJobs } from "./actions";
+import { getJobs, sendJobApplication } from "./actions";
 import { JOB_CATEGORIES, JOB_CATEGORY_LABELS, type Job } from "./schemas";
 
 export default function JobsPage() {
@@ -30,6 +31,9 @@ export default function JobsPage() {
   const [selectedCategory, setSelectedCategory] = useState<string>("all");
 
   const [isPending, startTransition] = useTransition();
+  const [applicationStatus, setApplicationStatus] = useState<
+    Record<string, "submitting" | "submitted">
+  >({});
 
   const loadJobs = useCallback(
     async ({
@@ -88,6 +92,25 @@ export default function JobsPage() {
         loadJobs({ page: page + 1 });
       });
     }
+  };
+
+  const handleApply = (jobId: string) => {
+    startTransition(async () => {
+      setApplicationStatus((prev) => ({ ...prev, [jobId]: "submitting" }));
+
+      const result = await sendJobApplication(jobId);
+
+      if (result?.error) {
+        toast.error(result.error);
+        setApplicationStatus((prev) => {
+          const { [jobId]: _, ...rest } = prev;
+          return rest;
+        });
+      } else if (result?.success) {
+        toast.success("Candidatura enviada com sucesso!");
+        setApplicationStatus((prev) => ({ ...prev, [jobId]: "submitted" }));
+      }
+    });
   };
 
   const hasMore = jobs.length < totalJobs;
@@ -218,7 +241,20 @@ export default function JobsPage() {
 
                   <CardFooter className="justify-end gap-3">
                     <Button variant="outline">Ver Detalhes</Button>
-                    <Button>Candidatar-se</Button>
+                    <Button
+                      onClick={() => handleApply(String(job.id))}
+                      disabled={
+                        isPending ||
+                        applicationStatus[String(job.id)] === "submitting" ||
+                        applicationStatus[String(job.id)] === "submitted"
+                      }
+                    >
+                      {applicationStatus[String(job.id)] === "submitting"
+                        ? "Enviando..."
+                        : applicationStatus[String(job.id)] === "submitted"
+                          ? "Candidatura Enviada"
+                          : "Candidatar-se"}
+                    </Button>
                   </CardFooter>
                 </Card>
               ))

@@ -45,3 +45,59 @@ export async function getJobs({
 
   return { data, error: null, count: count ?? 0 };
 }
+
+export async function sendJobApplication(jobId: string) {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { error: "Usuário não autenticado. Faça login para continuar." };
+  }
+
+  const { data: job, error: jobError } = await supabase
+    .from("jobs")
+    .select("status")
+    .eq("id", jobId)
+    .single();
+
+  if (jobError || !job) {
+    console.error("Error fetching job status:", jobError);
+    return { error: "Erro ao buscar status da vaga. Tente novamente." };
+  }
+
+  if (job.status !== "open") {
+    return { error: "Esta vaga não está mais aceitando candidaturas." };
+  }
+
+  const { data: existingApplication, error: applicationError } = await supabase
+    .from("applications")
+    .select("id")
+    .eq("job_id", jobId)
+    .eq("freelancer_id", user.id)
+    .maybeSingle();
+
+  if (applicationError) {
+    console.error("Error checking existing application:", applicationError);
+    return { error: "Erro ao verificar candidatura. Tente novamente." };
+  }
+
+  if (existingApplication) {
+    return { error: "Você já se candidatou para esta vaga." };
+  }
+
+  const { error: insertError } = await supabase.from("applications").insert({
+    job_id: jobId,
+    freelancer_id: user.id,
+    status: "pending",
+  });
+
+  if (insertError) {
+    console.error("Error sending job application:", insertError);
+    return { error: "Erro ao enviar candidatura. Tente novamente." };
+  }
+
+  return { success: true };
+}
