@@ -123,14 +123,6 @@ export default function JobsPage() {
         <p className="text-muted-foreground">
           Encontre serviços próximos de você
         </p>
-        <div className="mt-4">
-          <Button asChild size="lg">
-            <Link href="/jobs/new">
-              <Plus className="mr-2 h-4 w-4" />
-              Criar Novo Serviço
-            </Link>
-          </Button>
-        </div>
       </div>
 
       {/* Error message if any */}
